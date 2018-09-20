@@ -85,10 +85,21 @@ app.patch('/todos/:id', (req, res) => {
 
 app.post('/users', async (req, res) => {
   const user = new User(_.pick(req.body, ['email', 'password']));
+  
+  // Chaining promises
+  /* user.save().then(() => {
+    return user.generateAuthToken();
+  }).then((token) => {
+    res.header('x-auth', token).json({user});
+  }).catch((err) => {
+    res.status(400).json(err);
+  }); */
 
+  // Using async await
   try {
-    const userDetails = await user.save();
-    res.json({userDetails});
+    const savedUser = await user.save();
+    const token = await savedUser.generateAuthToken();
+    res.header('x-auth', token).json({user});
   } catch (error) {
     res.status(400).json(error);
   }
