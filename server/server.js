@@ -83,6 +83,17 @@ app.patch('/todos/:id', (req, res) => {
   }).catch(err => res.status(400).json());
 });
 
+app.post('/users', async (req, res) => {
+  const user = new User(_.pick(req.body, ['email', 'password']));
+
+  try {
+    const userDetails = await user.save();
+    res.json({userDetails});
+  } catch (error) {
+    res.status(400).json(error);
+  }
+});
+
 app.listen(port, () => console.log(`Running on port ${port}`));
 
 module.exports = { app };
