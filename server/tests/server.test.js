@@ -4,6 +4,7 @@ const { ObjectID } = require('mongodb');
 
 const { app } = require('../server');
 const { Todo } = require('../models/todo');
+const { User } = require('../models/user');
 const { todos, users, populateTodos, populateUsers } = require('./seed/seed');
 
 beforeEach(populateUsers);
@@ -187,6 +188,59 @@ describe('GET /users/me', () => {
       .expect(401)
       .expect((res) => {
         expect(res.body).toEqual({});
+      })
+      .end(done);
+  });
+});
+
+describe('POST /users', () => {
+  it('should create a user', (done) => {
+    const [email, password] = ['vaild@email.com', 'validPass'];
+
+    request(app)
+      .post('/users')
+      .send({ email, password })
+      .expect(200)
+      .expect((res) => {
+        expect(res.headers['x-auth']).toBeTruthy();
+        expect(res.body.user._id).toBeTruthy();
+        expect(res.body.user.email).toBe(email);
+      })
+      .end((err) => {
+        if (err) return done(err);
+
+        User.findOne({ email }).then((user) => {
+          expect(user).toBeDefined();
+          expect(user.password).not.toBe(password);
+          done();
+        });
+      });
+  });
+
+  it('should return validation errors if request invalid', (done) => {
+    request(app)
+      .post('/users')
+      .send({
+        email: 'invalid',
+        password: 'null?'
+      })
+      .expect(400)
+      .expect((res) => {
+        expect(res.body).toHaveProperty('errors');
+      })
+      .end(done);
+  });
+
+  it('should not create user if email in use', (done) => {
+    request(app)
+      .post('/users')
+      .send({
+        email: users[0].email,
+        password: 'validpass'
+      })
+      .expect(400)
+      .expect((res) => {
+        expect(res.body).toHaveProperty('errmsg');
       })
       .end(done);
   });
