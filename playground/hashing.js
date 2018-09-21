@@ -1,5 +1,6 @@
 // const { SHA256 } = require('crypto-js');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 /*
 const message = "Hash me! Please!";
@@ -31,7 +32,7 @@ if (resultHash === token.hash) {
   console.log('Omo na scam o!')
 } */
 
-const data = {
+/* const data = {
   id: 10
 };
 
@@ -44,4 +45,27 @@ try {
   console.log(decoded);
 } catch (err) {
   console.log('This one no follow o!')
-}
+} */
+
+// On bcrypt
+const pass = 'somepassword';
+
+// Using callbacks
+/* bcrypt.genSalt(10, (err, salt) => {
+  bcrypt.hash(pass, salt, (err, hash) => {
+    console.log(hash);
+  });
+});
+
+const hashedPassword = '$2a$10$PDE3nHy/RNa/YejrVMvR0eI6b466howvsbTbl/g2Gu4i.kmJIgRdi';
+
+bcrypt.compare(pass, hashedPassword, (err, res) => {
+  console.log(res);
+}); */
+
+// Using Async Await
+(async () => {
+  const hashedPass = await bcrypt.hash(pass, 10);
+  const hashedPassAltered = hashedPass+'modify';
+  console.log({genuine_altered: await bcrypt.compare(pass, hashedPassAltered)}, {genuine_unaltered: await bcrypt.compare(pass, hashedPass)});
+})();
