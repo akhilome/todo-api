@@ -110,6 +110,26 @@ app.get('/users/me', authenticate, (req, res) => {
   res.json({ user: req.user });
 });
 
+app.post('/users/login', async (req, res) => {
+  const body = _.pick(req.body, ['email', 'password']);
+
+  // Chaining Promises
+  /* User.findByCredentials(body.email, body.password).then((user) => {
+    return user.generateAuthToken().then((token) => {
+      res.header('x-auth', token).json({user});
+    })
+  }).catch(err => res.status(400).json()); */
+
+  // Using Async Await
+  try {
+    const confirmedUser = await User.findByCredentials(body.email, body.password);
+    const token = await confirmedUser.generateAuthToken();
+    res.header('x-auth', token).json({confirmedUser});
+  } catch (err) {
+    res.status(400).json();
+  }
+});
+
 app.listen(port, () => console.log(`Running on port ${port}`));
 
 module.exports = { app };
