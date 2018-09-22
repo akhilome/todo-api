@@ -14,9 +14,10 @@ const port = process.env.PORT;
 
 app.use(bodyParser.json());
 
-app.post('/todos', (req, res) => {
+app.post('/todos', authenticate, (req, res) => {
   const todo = new Todo({
-    text: req.body.text
+    text: req.body.text,
+    _creator: req.user._id
   });
 
   todo.save()
@@ -24,22 +25,22 @@ app.post('/todos', (req, res) => {
     .catch(err => res.status(400).json(err));
 });
 
-app.get('/todos', (req, res) => {
-  Todo.find().then(todos => {
+app.get('/todos', authenticate, (req, res) => {
+  Todo.find({ _creator: req.user._id }).then(todos => {
     res.json({todos});
   }).catch(err => {
     res.status(400).json(err);
   });
 });
 
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', authenticate, (req, res) => {
   const _id = req.params.id;
   
   if (!ObjectID.isValid(_id)) {
     return res.status(404).json({ error: "Invalid object id" });
   }
 
-  Todo.findById({_id}).then(todo => {
+  Todo.findOne({_id, _creator: req.user._id}).then(todo => {
     if (!todo) return res.status(404).json({ error: 'Todo not found' });
     res.json({todo});
   }).catch(err => {
@@ -47,14 +48,14 @@ app.get('/todos/:id', (req, res) => {
   });
 });
 
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', authenticate, (req, res) => {
   const _id = req.params.id;
 
   if (!ObjectID.isValid(_id)) {
     return res.status(404).json({ error: "Invalid object id" });
   }
 
-  Todo.findOneAndDelete({_id}).then(todo => {
+  Todo.findOneAndDelete({_id, _creator: req.user._id}).then(todo => {
     if (!todo) return res.status(404).send();
     res.status(200).json({todo});
   }).catch(error => {
@@ -62,7 +63,7 @@ app.delete('/todos/:id', (req, res) => {
   });
 });
 
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', authenticate, (req, res) => {
   const _id = req.params.id;
   const body = _.pick(req.body, ['text', 'completed']);
 
@@ -77,7 +78,7 @@ app.patch('/todos/:id', (req, res) => {
     body.completedAt = null;
   }
 
-  Todo.findOneAndUpdate({_id}, { $set: body }, { new: true }).then(todo => {
+  Todo.findOneAndUpdate({_id, _creator: req.user._id}, { $set: body }, { new: true }).then(todo => {
     if (!todo) return res.status(404).json();
 
     res.json({todo});
